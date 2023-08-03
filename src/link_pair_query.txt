@@ -1,65 +1,88 @@
-with meta as (
-    select acc as run, biosample, bioproject
-    from `metadata`
-    where collection_date_sam >= datetime(2022, 01, 31, 00, 00, 01)
+WITH meta AS (
+    SELECT acc AS run, biosample, bioproject
+    FROM "metadata"
 ),
-variations0 as (
-    select run, concat(ref, pos, alt) as ntvariation, concat(protein_name, ": ", variation) as aa_change, POS, REF, ALT, ref_aa, alt_aa, protein_name, variation
-    from `annotated_variations`
-    where G_AD_2/DP >= 0.5 and G_AD_2 >= 50 and DP >= 100
-            and run in (select run from meta)
-            and protein_name = "S"
-            and alt_aa is not null
+variations0 AS (
+    SELECT run, CONCAT(ref, CAST(pos as varchar), alt) AS ntvariation, CONCAT(protein_name, ': ', variation) AS aa_change, POS, REF, ALT, ref_aa, alt_aa, protein_name, variation
+    FROM "annotated_variations"
+    WHERE G_AD_2 / DP >= 0.5 AND G_AD_2 >= 50 AND DP >= 100
+        AND run IN (SELECT run FROM meta)
+        AND protein_name = 'S'
+        AND alt_aa IS NOT NULL
 ),
-variations as (
-    select variations0.run, POS, ntvariation as variation, aa_change
-    from variations0
+variations AS (
+    SELECT variations0.run, POS, ntvariation AS variation, aa_change
+    FROM variations0
 ),
-records as (
-    select count(distinct run) as runs
-    from variations
+records AS (
+    SELECT COUNT(DISTINCT run) AS runs
+    FROM variations
 ),
-variation_totprobs as (
-    select row_number() over(partition by null order by variation) as rown, 
-            variation,
-            count(distinct run) as var_tot,
-            count(distinct run)/(select runs from records) as var_prob
-    from variations
-    group by variation
-    order by variation
+variation_totprobs AS (
+    SELECT variation,
+           COUNT(DISTINCT run) AS var_tot,
+           COUNT(DISTINCT run) / (SELECT runs FROM records) AS var_prob
+    FROM variations
+    GROUP BY variation
 ),
-var_pairs as (
-    select v1.run, v1. variation as variation_1, v2.variation as variation_2, v1.aa_change as aa_change_1, v2.aa_change as aa_change_2, v3.var_tot as var_tot_1, v4.var_tot as var_tot_2, v3.var_prob as var_prob_1, v4.var_prob as var_prob_2
-    from variations v1
-    join variations v2 on v1.run = v2.run
-    join variation_totprobs v3 on v1.variation = v3.variation
-    join variation_totprobs v4 on v2.variation = v4.variation
-    where v1.variation != v2.variation and v3.rown < v4.rown
+var_pairs AS (
+    SELECT v1.run, v1.variation AS variation_1, v2.variation AS variation_2, v1.aa_change AS aa_change_1, v2.aa_change AS aa_change_2, v3.var_tot AS var_tot_1, v4.var_tot AS var_tot_2, v3.var_prob AS var_prob_1, v4.var_prob AS var_prob_2
+    FROM variations v1
+    JOIN variations v2 ON v1.run = v2.run
+    JOIN variation_totprobs v3 ON v1.variation = v3.variation
+    JOIN variation_totprobs v4 ON v2.variation = v4.variation
+    WHERE v1.variation != v2.variation
+),
+filtered_var_pairs AS (
+    SELECT *
+    FROM var_pairs
+    WHERE var_prob_1 != 1
+),
+final_result AS (
+    SELECT variation_1,
+           variation_2,
+           CONCAT_WS(DISTINCT aa_change_1) AS aa_change_1,
+           CONCAT_WS(DISTINCT aa_change_2) AS aa_change_2,
+           var_tot_1 AS var_1_count,
+           var_tot_2 AS var_2_count,
+           LEAST(var_tot_1, var_tot_2) AS max_records_possible,
+           COUNT(DISTINCT run) AS record_count,
+           COUNT(DISTINCT biosample) AS samples,
+           COUNT(DISTINCT bioproject) AS projects,
+           COUNT(DISTINCT run) / (SELECT runs FROM records) AS record_freq,
+           (SELECT runs FROM records) * COUNT(DISTINCT run) / (var_tot_1 * var_tot_2) AS rel_record_freq,
+           COUNT(DISTINCT run) / var_tot_1 AS con_prob_1,
+           COUNT(DISTINCT run) / var_tot_2 AS con_prob_2,
+           COUNT(DISTINCT run) / (var_tot_1 + var_tot_2 - COUNT(DISTINCT run)) AS jaccard,
+           (
+               (var_tot_1 - COUNT(DISTINCT run)) * ((1 - var_prob_1) * (-1 * var_prob_2))
+               + (var_tot_2 - COUNT(DISTINCT run)) * ((-1 * var_prob_1) * (1 - var_prob_2))
+               + COUNT(DISTINCT run) * ((1 - var_prob_1) * (1 - var_prob_2))
+           ) / SQRT(
+               (
+                   (var_tot_1 - COUNT(DISTINCT run)) * ((1 - var_prob_1) * (1 - var_prob_2))
+                   + (var_tot_2 - COUNT(DISTINCT run)) * ((-1 * var_prob_1) * (-1 * var_prob_2))
+                   + COUNT(DISTINCT run) * ((1 - var_prob_1) * (1 - var_prob_2))
+               ) * (
+                   (var_tot_1 - COUNT(DISTINCT run)) * ((-1 * var_prob_1) * (-1 * var_prob_2))
+                   + (var_tot_2 - COUNT(DISTINCT run)) * ((1 - var_prob_1) * (1 - var_prob_2))
+                   + COUNT(DISTINCT run) * ((1 - var_prob_1) * (1 - var_prob_2))
+               )
+           ) AS pearson
+    FROM filtered_var_pairs v0
+    JOIN meta m ON m.run = v0.run
+    GROUP BY variation_1, variation_2, var_tot_1, var_tot_2, var_prob_1, var_prob_2
+    HAVING max_records_possible > 100
+       AND samples > 100
+       AND projects > 2
+       AND (
+           (rel_record_freq > 1.5)
+           OR (rel_record_freq < 1/1.5)
+           OR (jaccard > 1.5 * con_prob_1 * con_prob_2 OR jaccard < 0.5 * con_prob_1 * con_prob_2)
+           OR (con_prob_1 > 0.99 OR con_prob_1 < 0.01 OR con_prob_2 > 0.99 OR con_prob_2 < 0.01 OR jaccard > 0.9 OR jaccard < 0.1)
+           OR (pearson > 1/10 OR pearson < -1/10)
+       )
 )
-select v0.variation_1,
-       v0.variation_2,
-       string_agg(distinct aa_change_1) as aa_change_1,
-       string_agg(distinct aa_change_2) as aa_change_2,
-       var_tot_1 as var_1_count,
-       var_tot_2 as var_2_count,
-       least(var_tot_1, var_tot_2) as max_records_possible,
-       count(distinct v0.run) as record_count,
-       count(distinct biosample) as samples,
-       count(distinct bioproject) as projects,
-       count(distinct v0.run) / (select runs from records) as record_freq,
-       (select runs from records) * count(distinct v0.run) / (var_tot_1 * var_tot_2) as rel_record_freq,
-       count(distinct v0.run) / (var_tot_1) as con_prob_1,
-       count(distinct v0.run) / (var_tot_2) as con_prob_2,
-       count(distinct v0.run) / (var_tot_1 + var_tot_2 - count(distinct v0.run)) as jaccard,
-       (((var_tot_1 - count(distinct v0.run))*((1 - var_prob_1)*(-1*var_prob_2)))+((var_tot_2 - count(distinct v0.run))*((-1*var_prob_1)*(1-var_prob_2)))+(count(distinct v0.run)*((1-var_prob_1)*(1-var_prob_2))))/sqrt((((var_tot_1 - count(distinct v0.run))*((1 - var_prob_1)*(1 - var_prob_2))+((var_tot_2 - count(distinct v0.run))*((-1*var_prob_1)*(-1*var_prob_2)))+(count(distinct v0.run)*((1-var_prob_1)*(1-var_prob_2)))))*((var_tot_1 - count(distinct v0.run))*((-1*var_prob_1)*(-1*var_prob_2))+((var_tot_2 - count(distinct v0.run))*((1-var_prob_1)*(1-var_prob_2)))+(count(distinct v0.run)*((1-var_prob_1)*(1-var_prob_2))))) as pearson
-from var_pairs v0
-join meta m on m.run = v0.run
-where var_prob_1 != 1
-group by variation_1, variation_2, var_tot_1, var_tot_2, var_prob_1, var_prob_2
-having max_records_possible >100 and
-        samples > 100 and
-        projects >2 and 
-        ((rel_record_freq > 1.5) or (rel_record_freq < 1/1.5) or 
-        (jaccard > 1.5*con_prob_1*con_prob_2 or jaccard < 0.5*con_prob_1*con_prob_2 or con_prob_1>0.99 or con_prob_1<0.01 or con_prob_2>0.99 or con_prob_2<0.01 or jaccard>0.9 or jaccard<0.1 ) or
-        (pearson > 1/10 or pearson < -1/10))
-order by max_records_possible desc, record_freq desc
+SELECT *
+FROM final_result
+ORDER BY max_records_possible DESC, record_freq DESC;
