@@ -4,7 +4,7 @@
 List of participants and affiliations:
 - Andrew Warren, University of Virginia (Team Leader)
 - Cristina Delgado, Association of Public Health Laboratories
-- David Stern, Affiliation
+- David Stern, National Biodefense Analysis and Countermeasures Center
 - Efe Sezgin, Izmir Institute of Technology
 - Kaitlin Zajac, Rutgers University
 - Katherine Ramos, Gibbons Lab
