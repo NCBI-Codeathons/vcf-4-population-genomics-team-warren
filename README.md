@@ -7,7 +7,7 @@ List of participants and affiliations:
 - David Stern, National Biodefense Analysis and Countermeasures Center
 - Efe Sezgin, Izmir Institute of Technology
 - Kaitlin Zajac, Rutgers University
-- Katherine Ramos, Gibbons Lab
+- Katherine Ramos, Gibbons Lab at the Institute for Systems Biology
 - Saber Tadros, National Institutes of Health
 
 ## Project Goals
