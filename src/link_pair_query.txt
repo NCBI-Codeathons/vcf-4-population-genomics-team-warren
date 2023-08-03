@@ -50,7 +50,7 @@ final_result AS (
            COUNT(DISTINCT biosample) AS samples,
            COUNT(DISTINCT bioproject) AS projects,
            COUNT(DISTINCT v0.run) / (SELECT runs FROM records) AS record_freq,
-           (SELECT runs FROM records) * COUNT(DISTINCT v0.run) / (var_tot_1 * var_tot_2) AS rel_record_freq,
+           CAST((SELECT runs FROM records) as bigint) * COUNT(DISTINCT v0.run) / (var_tot_1 * var_tot_2) AS rel_record_freq,
            COUNT(DISTINCT v0.run) / var_tot_1 AS con_prob_1,
            COUNT(DISTINCT v0.run) / var_tot_2 AS con_prob_2,
            COUNT(DISTINCT v0.run) / (var_tot_1 + var_tot_2 - COUNT(DISTINCT v0.run)) AS jaccard,
