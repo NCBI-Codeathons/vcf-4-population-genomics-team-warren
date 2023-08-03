@@ -1,4 +1,5 @@
 # Team Linkage
+![Logo](logo.png)
 
 ## Team Members
 List of participants and affiliations:
@@ -20,9 +21,9 @@ Creation of a linkage landscape [dataset + visualization] for SARS-COV-2 using m
 - Pandas package.
 
 **Methods**
-Usage of the Pearson correlation coefficient value of ___ as a cutoff for the pairs that are found. Visualization with a graph of the number of samples involved per pair.
-Conversion of the sets of positions into a GFF3 tracks.
-Utilization of GFF3 tracks to visualize the linked positions per track on JBrowse, e.g., loading 10 clusters into a GFF3 to see them in the Jbrowser.
+1. Usage of the Pearson correlation coefficient value of ___ as a cutoff for the pairs that are found. Visualization with a graph of the number of samples involved per pair.
+2. Conversion of the sets of positions into a GFF3 tracks.
+3. Utilization of GFF3 tracks to visualize the linked positions per track on JBrowse, e.g., loading 10 clusters into a GFF3 to see them in the Jbrowser.
 
 ## Results
 
