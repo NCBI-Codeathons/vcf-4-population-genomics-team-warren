@@ -46,27 +46,27 @@ final_result AS (
            var_tot_1 AS var_1_count,
            var_tot_2 AS var_2_count,
            LEAST(var_tot_1, var_tot_2) AS max_records_possible,
-           COUNT(DISTINCT run) AS record_count,
+           COUNT(DISTINCT v0.run) AS record_count,
            COUNT(DISTINCT biosample) AS samples,
            COUNT(DISTINCT bioproject) AS projects,
-           COUNT(DISTINCT run) / (SELECT runs FROM records) AS record_freq,
-           (SELECT runs FROM records) * COUNT(DISTINCT run) / (var_tot_1 * var_tot_2) AS rel_record_freq,
-           COUNT(DISTINCT run) / var_tot_1 AS con_prob_1,
-           COUNT(DISTINCT run) / var_tot_2 AS con_prob_2,
-           COUNT(DISTINCT run) / (var_tot_1 + var_tot_2 - COUNT(DISTINCT run)) AS jaccard,
+           COUNT(DISTINCT v0.run) / (SELECT runs FROM records) AS record_freq,
+           (SELECT runs FROM records) * COUNT(DISTINCT v0.run) / (var_tot_1 * var_tot_2) AS rel_record_freq,
+           COUNT(DISTINCT v0.run) / var_tot_1 AS con_prob_1,
+           COUNT(DISTINCT v0.run) / var_tot_2 AS con_prob_2,
+           COUNT(DISTINCT v0.run) / (var_tot_1 + var_tot_2 - COUNT(DISTINCT v0.run)) AS jaccard,
            (
-               (var_tot_1 - COUNT(DISTINCT run)) * ((1 - var_prob_1) * (-1 * var_prob_2))
-               + (var_tot_2 - COUNT(DISTINCT run)) * ((-1 * var_prob_1) * (1 - var_prob_2))
-               + COUNT(DISTINCT run) * ((1 - var_prob_1) * (1 - var_prob_2))
+               (var_tot_1 - COUNT(DISTINCT v0.run)) * ((1 - var_prob_1) * (-1 * var_prob_2))
+               + (var_tot_2 - COUNT(DISTINCT v0.run)) * ((-1 * var_prob_1) * (1 - var_prob_2))
+               + COUNT(DISTINCT v0.run) * ((1 - var_prob_1) * (1 - var_prob_2))
            ) / SQRT(
                (
-                   (var_tot_1 - COUNT(DISTINCT run)) * ((1 - var_prob_1) * (1 - var_prob_2))
-                   + (var_tot_2 - COUNT(DISTINCT run)) * ((-1 * var_prob_1) * (-1 * var_prob_2))
-                   + COUNT(DISTINCT run) * ((1 - var_prob_1) * (1 - var_prob_2))
+                   (var_tot_1 - COUNT(DISTINCT v0.run)) * ((1 - var_prob_1) * (1 - var_prob_2))
+                   + (var_tot_2 - COUNT(DISTINCT v0.run)) * ((-1 * var_prob_1) * (-1 * var_prob_2))
+                   + COUNT(DISTINCT v0.run) * ((1 - var_prob_1) * (1 - var_prob_2))
                ) * (
-                   (var_tot_1 - COUNT(DISTINCT run)) * ((-1 * var_prob_1) * (-1 * var_prob_2))
-                   + (var_tot_2 - COUNT(DISTINCT run)) * ((1 - var_prob_1) * (1 - var_prob_2))
-                   + COUNT(DISTINCT run) * ((1 - var_prob_1) * (1 - var_prob_2))
+                   (var_tot_1 - COUNT(DISTINCT v0.run)) * ((-1 * var_prob_1) * (-1 * var_prob_2))
+                   + (var_tot_2 - COUNT(DISTINCT v0.run)) * ((1 - var_prob_1) * (1 - var_prob_2))
+                   + COUNT(DISTINCT v0.run) * ((1 - var_prob_1) * (1 - var_prob_2))
                )
            ) AS pearson
     FROM filtered_var_pairs v0
