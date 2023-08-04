@@ -70,40 +70,74 @@ Creating and executing the query
 query="""WITH meta AS (
     SELECT acc AS run, biosample, bioproject
     FROM "metadata"
-),
-variations0 AS (
-    SELECT run, CONCAT(ref, CAST(pos as varchar), alt) AS ntvariation, CONCAT(protein_name, ': ', variation) AS aa_change, POS, REF, ALT, ref_aa, alt_aa, protein_name, variation
-    FROM "annotated_variations"
-    WHERE G_AD_2 / DP >= 0.5 AND G_AD_2 >= 50 AND DP >= 100
-        AND run IN (SELECT run FROM meta)
-        AND protein_name = 'S'
-        AND alt_aa IS NOT NULL
+    WHERE cast(collection_date_sam[1] AS date) >= date_parse('2022-01-01', '%Y-%m-%d')
 ),
 variations AS (
-    SELECT variations0.run, POS, ntvariations AS variation, aa_change
-    FROM variations0
-), records AS (
-    SELECT COUNT(DISTINCT run) AS runs
+    SELECT run, POS, concat(ref, cast(pos AS varchar), alt) AS variation, concat(protein_name, cast(':' AS varchar), variation) AS aa_change
+    FROM "annotated_variations"
+    JOIN meta USING(run)
+    WHERE G_AD_2/DP >= 0.5 AND G_AD_2 >= 50 AND DP >= 100 AND protein_name = concat('S','') AND alt_aa IS NOT NULL
+),
+records AS (
+    SELECT count(distinct run) AS runs
     FROM variations
 ),
 variation_totprobs AS (
-    SELECT variation,
-           COUNT(DISTINCT run) AS var_tot,
-           COUNT(DISTINCT run) / (SELECT runs FROM records) AS var_prob
+    SELECT row_number() OVER(PARTITION BY NULL ORDER BY variation) AS rown, 
+           variation,
+           count(distinct run) AS var_tot,
+           count(distinct run)/(SELECT runs FROM records) AS var_prob
     FROM variations
     GROUP BY variation
+    ORDER BY variation    
+),
+var_pairs AS (
+    SELECT v1.run, 
+           v1.variation AS variation_1, 
+           v2.variation AS variation_2, 
+           v1.aa_change AS aa_change_1, 
+           v2.aa_change AS aa_change_2, 
+           v3.var_tot AS var_tot_1, 
+           v4.var_tot AS var_tot_2, 
+           v3.var_prob AS var_prob_1, 
+           v4.var_prob AS var_prob_2
+    FROM variations v1
+    JOIN variations v2 ON v1.run = v2.run
+    JOIN variation_totprobs v3 ON v1.variation = v3.variation
+    JOIN variation_totprobs v4 ON v2.variation = v4.variation
+    WHERE v1.variation != v2.variation AND v3.rown < v4.rown
+),
+results as (
+    select v0.variation_1,
+       v0.variation_2,
+       aa_change_1,
+       aa_change_2,
+       var_tot_1 as var_1_count,
+       var_tot_2 as var_2_count,
+       least(var_tot_1, var_tot_2) as max_records_possible,
+       count(distinct v0.run) as record_count,
+       count(distinct biosample) as samples,
+       count(distinct bioproject) as projects,
+       count(distinct v0.run) / (select runs from records) as record_freq,
+       (select runs from records) * count(distinct v0.run) / (var_tot_1 * var_tot_2) as rel_record_freq,
+       count(distinct v0.run) / (var_tot_1) as con_prob_1,
+       count(distinct v0.run) / (var_tot_2) as con_prob_2,
+       count(distinct v0.run) / (var_tot_1 + var_tot_2 - count(distinct v0.run)) as jaccard,
+       (((var_tot_1 - count(distinct v0.run))*((1 - var_prob_1)*(-1*var_prob_2)))+((var_tot_2 - count(distinct v0.run))*((-1*var_prob_1)*(1-var_prob_2)))+(count(distinct v0.run)*((1-var_prob_1)*(1-var_prob_2))))/sqrt((((var_tot_1 - count(distinct v0.run))*((1 - var_prob_1)*(1 - var_prob_2))+((var_tot_2 - count(distinct v0.run))*((-1*var_prob_1)*(-1*var_prob_2)))+(count(distinct v0.run)*((1-var_prob_1)*(1-var_prob_2)))))*((var_tot_1 - count(distinct v0.run))*((-1*var_prob_1)*(-1*var_prob_2))+((var_tot_2 - count(distinct v0.run))*((1-var_prob_1)*(1-var_prob_2)))+(count(distinct v0.run)*((1-var_prob_1)*(1-var_prob_2))))) as pearson
+    from var_pairs v0
+    join meta m on m.run = v0.run
+    where var_prob_1 != 1
+    group by variation_1, variation_2, var_tot_1, var_tot_2, var_prob_1, var_prob_2, aa_change_1, aa_change_2
 )
+select *
+from results
+where max_records_possible >100 and
+        samples > 100 and
+        projects >2 and 
+        ((rel_record_freq > 1.5) or (rel_record_freq < 1/1.5) or 
+        (jaccard > 1.5*con_prob_1*con_prob_2 or jaccard < 0.5*con_prob_1*con_prob_2 or con_prob_1>0.99 or con_prob_1<0.01 or con_prob_2>0.99 or con_prob_2<0.01 or jaccard>0.9 or jaccard<0.1 ) or
+        (pearson > 1/10 or pearson < -1/10))
       """
-
-response = CLIENT.start_query_execution(
-    QueryString=query,
-    QueryExecutionContext={
-        'Database': DATABASE_NAME
-    },
-    ResultConfiguration={
-        'OutputLocation': RESULT_OUTPUT_LOCATION
-    }
-)
 
 # Getting the query execution ID
 query_execution_id = response['QueryExecutionId']
