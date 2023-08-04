@@ -139,16 +139,6 @@ where max_records_possible >100 and
         (pearson > 1/10 or pearson < -1/10))
       """
 
-response = CLIENT.start_query_execution(
-    QueryString=query,
-    QueryExecutionContext={
-        'Database': DATABASE_NAME
-    },
-    ResultConfiguration={
-        'OutputLocation': RESULT_OUTPUT_LOCATION
-    }
-)
-
 # Getting the query execution ID
 query_execution_id = response['QueryExecutionId']
 
