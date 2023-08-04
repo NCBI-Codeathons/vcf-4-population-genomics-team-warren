@@ -27,13 +27,14 @@ Creation of a linkage landscape [dataset + visualization] for SARS-COV-2 using m
 **Prerequisites**
 - Connection to the Athena database.
 - Python environment to make a SQL query against the Athena database.
-- Installation of the following packges: pandas, boto3, pyathena and time.
+- Installation of the following packges: pandas, boto3, pyathena, time, markov_clustering, xlrd, numpy, scikit-learn and scipy.
 
 **Procedure**
 1. Usage of the Pearson correlation coefficient value of ___ as a cutoff for the pairs that are found. Visualization with a graph of the number of samples involved per pair.
 2. Conversion of the sets of positions into a GFF3 tracks.
 3. Utilization of GFF3 tracks to visualize the linked positions per track on JBrowse, e.g., loading 10 clusters into a GFF3 to see them in the Jbrowser.
 
+###Query
 **Running the code**
 
 Installing the packages
@@ -129,6 +130,25 @@ df = pd.DataFrame(data_rows, columns=column_names)
 
 # Displaying the DataFrame
 print(df)
+```
+
+###Markov Clustering
+**Running the code**
+
+Installing the packages
+```
+# Installing necessary packages
+import pandas as pd
+!pip install markov_clustering
+!pip install xlrd
+!pip install numpy
+!pip install scikit-learn
+import numpy as np
+import markov_clustering as mc
+import networkx as nx
+import random
+!pip install scipy
+import scipy
 ```
 
 ## Results
