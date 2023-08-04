@@ -3,12 +3,12 @@
 
 ## Table of Contents
 
-1. [Team Members](#team members)
+1. [TeamMembers](#teammembers)
 2. [Methods](#methods)
-3. [Project Goals](#project goals)
+3. [ProjectGoals](#projectgoals)
 4. [Methods](#methods)
 5. [Results](#results)
-6. [Future Work](#future work)
+6. [FutureWork](#futurework)
 
 
 ## Team Members
@@ -36,6 +36,7 @@ Creation of a linkage landscape [dataset + visualization] for SARS-COV-2 using m
 3. Utilization of GFF3 tracks to visualize the linked positions per track on JBrowse, e.g., loading 10 clusters into a GFF3 to see them in the Jbrowser.
 
 **Running the code**
+
 Installing the packages
 ```
 # Install packages
