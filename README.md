@@ -65,9 +65,72 @@ RESULT_OUTPUT_LOCATION = "s3://ncbi-vcf-codeathon-rc-athena/"
 
 Creating and executing the query
 ```
-code
+# Creating the query
+query="""WITH meta AS (
+    SELECT acc AS run, biosample, bioproject
+    FROM "metadata"
+),
+variations0 AS (
+    SELECT run, CONCAT(ref, CAST(pos as varchar), alt) AS ntvariation, CONCAT(protein_name, ': ', variation) AS aa_change, POS, REF, ALT, ref_aa, alt_aa, protein_name, variation
+    FROM "annotated_variations"
+    WHERE G_AD_2 / DP >= 0.5 AND G_AD_2 >= 50 AND DP >= 100
+        AND run IN (SELECT run FROM meta)
+        AND protein_name = 'S'
+        AND alt_aa IS NOT NULL
+),
+variations AS (
+    SELECT variations0.run, POS, ntvariations AS variation, aa_change
+    FROM variations0
+), records AS (
+    SELECT COUNT(DISTINCT run) AS runs
+    FROM variations
+),
+variation_totprobs AS (
+    SELECT variation,
+           COUNT(DISTINCT run) AS var_tot,
+           COUNT(DISTINCT run) / (SELECT runs FROM records) AS var_prob
+    FROM variations
+    GROUP BY variation
+)
+      """
+
+response = CLIENT.start_query_execution(
+    QueryString=query,
+    QueryExecutionContext={
+        'Database': DATABASE_NAME
+    },
+    ResultConfiguration={
+        'OutputLocation': RESULT_OUTPUT_LOCATION
+    }
+)
+
+# Getting the query execution ID
+query_execution_id = response['QueryExecutionId']
+
+# Function to check the status of the query execution
+def is_query_running(query_execution_id):
+    response = CLIENT.get_query_execution(QueryExecutionId=query_execution_id)
+    state = response['QueryExecution']['Status']['State']
+    return state in ['QUEUED', 'RUNNING']
+
+# Waiting for the query to complete
+while is_query_running(query_execution_id):
+    time.sleep(5)  # Wait for 5 seconds before checking again
 ```
 
+Obtaining the results
+```
+# Getting the results from Athena using get_query_results
+response = CLIENT.get_query_results(QueryExecutionId=query_execution_id)
+
+## Converting the results to a Pandas DataFrame
+column_names = [col['Name'] for col in response['ResultSet']['ResultSetMetadata']['ColumnInfo']]
+data_rows = [list(row['Data']) for row in response['ResultSet']['Rows'][1:]]
+df = pd.DataFrame(data_rows, columns=column_names)
+
+# Displaying the DataFrame
+print(df)
+```
 
 ## Results
 
