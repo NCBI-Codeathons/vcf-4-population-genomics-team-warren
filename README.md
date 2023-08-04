@@ -3,14 +3,14 @@
 
 ## Table of Contents
 
-1. [Team Members](#team%20members)
+1. [Team](#team)
 2. [Goals](#goals)
 3. [Methods](#methods)
 4. [Results](#results)
-5. [Future Work](#future%20work)
+5. [FutureWork](#futurework)
 
 
-## Team Members
+## Team
 List of participants and affiliations:
 - Andrew Warren, University of Virginia (Team Leader)
 - Cristina Delgado, Association of Public Health Laboratories (Writer)
@@ -38,7 +38,7 @@ Creation of a linkage landscape [dataset + visualization] for SARS-COV-2 using m
 
 Installing the packages
 ```
-# Install packages
+# Installing necessary packages
 %pip install boto3 pandas pyathena
 import pandas as pd
 import boto3
@@ -122,7 +122,7 @@ Obtaining the results
 # Getting the results from Athena using get_query_results
 response = CLIENT.get_query_results(QueryExecutionId=query_execution_id)
 
-## Converting the results to a Pandas DataFrame
+# Converting the results to a Pandas DataFrame
 column_names = [col['Name'] for col in response['ResultSet']['ResultSetMetadata']['ColumnInfo']]
 data_rows = [list(row['Data']) for row in response['ResultSet']['Rows'][1:]]
 df = pd.DataFrame(data_rows, columns=column_names)
@@ -134,7 +134,7 @@ print(df)
 ## Results
 
 
-## Future Work
+## FutureWork
 Calculation of additional subtractions sets from haplotypes to produce a better drop filter that would result in sets with higher quality. 
 Development of a method to subtract/explain the relationship between lineage defining mutations and the clusters of paired mutations found in the query. 
 Application of the Markov Clustering algorithm.
