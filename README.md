@@ -28,7 +28,7 @@ Creation of a linkage landscape [dataset + visualization] for SARS-COV-2 using m
 **Prerequisites**
 - Connection to the Athena database.
 - Python environment to make a SQL query against the Athena database.
-- Pandas package.
+- Installation of the following packges: pandas, boto3, pyathena and time.
 
 **Procedure**
 1. Usage of the Pearson correlation coefficient value of ___ as a cutoff for the pairs that are found. Visualization with a graph of the number of samples involved per pair.
@@ -46,6 +46,28 @@ import boto3
 import pyathena
 import time
 ```
+
+Configurating AWS
+```
+# User must import their AWS credentials here
+%export AWS_ACCESS_KEY_ID="your_access_key_id"
+%export AWS_SECRET_ACCESS_KEY="your_secret_access_key"
+%export AWS_DEFAULT_REGION="your_aws_region"
+
+CLIENT = boto3.client("athena", aws_access_key_id=AWS_ACCESS_KEY,
+    aws_secret_access_key=AWS_SECRET_KEY,
+    region_name=AWS_REGION,
+)
+
+DATABASE_NAME = "ncbi-vcf-codeathon-rc-db1"
+RESULT_OUTPUT_LOCATION = "s3://ncbi-vcf-codeathon-rc-athena/"
+```
+
+Creating and executing the query
+```
+code
+```
+
 
 ## Results
 
