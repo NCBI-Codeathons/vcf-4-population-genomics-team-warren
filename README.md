@@ -3,12 +3,11 @@
 
 ## Table of Contents
 
-1. [TeamMembers](#teammembers)
-2. [Methods](#methods)
-3. [ProjectGoals](#projectgoals)
-4. [Methods](#methods)
-5. [Results](#results)
-6. [FutureWork](#futurework)
+1. [Team Members](#team%20members)
+2. [Goals](#goals)
+3. [Methods](#methods)
+4. [Results](#results)
+5. [Future Work](#future%20work)
 
 
 ## Team Members
@@ -21,7 +20,7 @@ List of participants and affiliations:
 - Katherine Ramos, Gibbons Lab at the Institute for Systems Biology,
 - Saber Tadros, National Institutes of Health,
 
-## Project Goals
+## Goals
 Creation of a linkage landscape [dataset + visualization] for SARS-COV-2 using methods for identification of linked tuples of positions with an associated significance score.
 
 ## Methods
