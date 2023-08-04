@@ -215,6 +215,12 @@ import scipy
 ```
 
 ## Results
+### Clustering mutations based on linkage
+
+![Overview gene variation clustering](https://github.com/NCBI-Codeathons/vcf-4-population-genomics-team-warren/blob/main/data/gene_variation_clustering.png)
+
+### Significant clusters
+![Overview significant clusters](https://github.com/NCBI-Codeathons/vcf-4-population-genomics-team-warren/blob/main/data/significant_clusters.png)
 
 
 ## FutureWork
