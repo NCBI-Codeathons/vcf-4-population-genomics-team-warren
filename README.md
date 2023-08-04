@@ -24,15 +24,42 @@ List of participants and affiliations:
 Creation of a linkage landscape [dataset + visualization] for SARS-COV-2 using methods for identification of linked tuples of positions with an associated significance score.
 
 ## Methods
-**Prerequisites**
+### Prerequisites
+- Understanding of the concepts of: viral haplotypes, quasi-species, linkage disequilibrium, lineage defining mutations, epistatic mutations, etc.
 - Connection to the Athena database.
 - Python environment to make a SQL query against the Athena database.
 - Installation of the following packges: pandas, boto3, pyathena, time, markov_clustering, xlrd, numpy, scikit-learn and scipy.
 
-**Procedure**
-1. Usage of the Pearson correlation coefficient value of ___ as a cutoff for the pairs that are found. Visualization with a graph of the number of samples involved per pair.
-2. Conversion of the sets of positions into a GFF3 tracks.
-3. Utilization of GFF3 tracks to visualize the linked positions per track on JBrowse, e.g., loading 10 clusters into a GFF3 to see them in the Jbrowser.
+### Procedure
+**Step 1. VCF DB query development**
+1. Query to find meaningful correlation between mutations
+2. Connect to athena.
+3. Convert big query SQL to athena SQL.
+4. Convert query to find generic position linkages.
+
+**Step 2. Python connection to Athena (Boto)**
+1. Demonstrated query to pandas data table.
+2. Use converted big query to get pandas stored result.
+3. Generate statistics on number of samples.
+4. Graph of the number of samples involved per pair.
+
+**Step 3. Cluster pairs of correlated mutations**
+1. Markov clustering based on Pearson >0.1 < -0.1.
+2. Deploy Silhouette score for understanding cluster significance.
+
+**Step 4. Develop a method to subtract / explain the relationship between lineage defining mutations and the clusters of paired mutations (from query)**
+1. Bipartite matching based on best overlap with lineage defining mutations.
+2. Set threshold of overlap (heuristic based on distribution).
+
+**Step 5. Check literature / group knowledge of “famous” mutations that are present in significant clusters**
+1. Immunocompromised hallmarks.
+2. Immune escape mutations.
+3. SGTF (will deletion impact our variation calculation).
+
+**Step 6. Visualization development**
+1. Graph cluster visualization.
+2. Convert python sets into GFF3 tracks for viewing on JBrowse.
+
 
 ### Query
 
